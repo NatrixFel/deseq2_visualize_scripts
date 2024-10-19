@@ -3,19 +3,13 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-def load_and_process_data(results_file, annot_file):
+def load_and_process_data(results_file):
     
     results_df = pd.read_csv(results_file)
     results_df_proc = results_df.rename(columns={'Unnamed: 0': 'target_id'})
     results_df_proc['target_id'] = results_df_proc['target_id'].astype(str)
-
-    blast_df = pd.read_csv(annot_file)
-    blast_df.columns = ['target_id', 'protein_id']
-    blast_df['target_id'] = blast_df['target_id'].astype(str)
-
-    merged_df = pd.merge(results_df_proc, blast_df[['target_id', 'protein_id']], on='target_id', how='left')
     
-    return merged_df
+    return results_df_proc
 
 def filter_data(df):
     filtered_df = df.dropna(subset=['padj', 'log2FoldChange'])
@@ -23,7 +17,6 @@ def filter_data(df):
     filtered_df.loc[:, 'pvalue'] = pd.to_numeric(filtered_df['pvalue'], errors='coerce')
     filtered_df.loc[:, 'log2FoldChange'] = pd.to_numeric(filtered_df['log2FoldChange'], errors='coerce')
     filtered_df = filtered_df.dropna(subset=['pvalue', 'log2FoldChange'])
-    filtered_df = filtered_df.drop_duplicates(subset=['protein_id'])
     filtered_df['-log10(pvalue)'] = -np.log10(filtered_df['pvalue'])
 
     return filtered_df
@@ -77,8 +70,8 @@ def plot_volcano(df, significance_threshold, fold_change_threshold):
     print(f"Volcano plot saved as volcano.png")
 
 
-def run_volcano(results_file, annot_file, significance_threshold, fold_change_threshold):
-    merged_df = load_and_process_data(results_file, annot_file)
+def run_volcano(results_file, significance_threshold, fold_change_threshold):
+    merged_df = load_and_process_data(results_file)
     filtered_df = filter_data(merged_df)
 
     plot_volcano(filtered_df, significance_threshold, fold_change_threshold)
